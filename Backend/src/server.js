@@ -59,7 +59,8 @@ const startServer = async () => {
     // Test database connection
     await db.testConnection();
     
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
+
       console.log('\n╔════════════════════════════════════════════════╗');
       console.log(`║  SHAREFAR.AI Backend Server                    ║`);
       console.log(`║  Running on http://localhost:${PORT}                  ║`);

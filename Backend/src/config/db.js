@@ -1,16 +1,13 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Create a new connection pool
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
-// Test the connection
 pool.on('connect', () => {
   console.log('✓ PostgreSQL pool connected');
 });
@@ -19,7 +16,6 @@ pool.on('error', (err) => {
   console.error('✗ Unexpected error on idle client', err);
 });
 
-// Function to test database connection
 const testConnection = async () => {
   try {
     const result = await pool.query('SELECT NOW()');
@@ -27,28 +23,16 @@ const testConnection = async () => {
     return true;
   } catch (err) {
     console.error('✗ Database connection failed:', err.message);
-    return false;
+    throw err; // Important
   }
 };
 
-// Function to execute queries
-const query = (text, params) => {
-  return pool.query(text, params);
-};
+const query = (text, params) => pool.query(text, params);
+const getClient = () => pool.connect();
 
-// Function to get a client from the pool
-const getClient = () => {
-  return pool.connect();
-};
-
-// Graceful shutdown
 const closePool = async () => {
-  try {
-    await pool.end();
-    console.log('✓ Database pool closed');
-  } catch (err) {
-    console.error('✗ Error closing pool:', err);
-  }
+  await pool.end();
+  console.log('✓ Database pool closed');
 };
 
 module.exports = {
@@ -58,3 +42,4 @@ module.exports = {
   testConnection,
   closePool,
 };
+
