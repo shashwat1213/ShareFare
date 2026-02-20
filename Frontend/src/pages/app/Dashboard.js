@@ -15,7 +15,6 @@ const Dashboard = ({ currentUser, onLogout }) => {
   const calculateBalances = useCallback((allExpenses) => {
     let totalSpent = 0;
     let youOwe = 0;
-    let userOweYou = 0;
 
     allExpenses.forEach(expense => {
       if (expense.paidBy === currentUser.email) {
