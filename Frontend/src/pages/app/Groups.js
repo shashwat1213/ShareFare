@@ -1,26 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../layouts/MainLayout';
+import AddMemberModal from '../../components/AddMemberModal';
 import '../../styles/AppPages.css';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const Groups = ({ currentUser, onLogout }) => {
   const navigate = useNavigate();
   const [groups, setGroups] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    members: []
   });
 
-  const availableMembers = ['john@example.com', 'jane@example.com', 'mike@example.com', 'sarah@example.com'];
-
+  // Fetch user groups on mount
   useEffect(() => {
-    // Load groups from localStorage
-    const storedGroups = localStorage.getItem('groups');
-    if (storedGroups) {
-      setGroups(JSON.parse(storedGroups));
+    fetchUserGroups();
+  }, [currentUser]);
+
+  const fetchUserGroups = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `${API_URL}/groups/user?userEmail=${currentUser.email}`
+      );
+      const data = await response.json();
+      if (data.status === 'SUCCESS') {
+        setGroups(data.data.groups || []);
+      } else {
+        setError(data.message || 'Failed to fetch groups');
+      }
+    } catch (err) {
+      console.error('Error fetching groups:', err);
+      setError('Failed to fetch groups');
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,43 +52,72 @@ const Groups = ({ currentUser, onLogout }) => {
     }));
   };
 
-  const handleMemberChange = (member) => {
-    setFormData(prev => ({
-      ...prev,
-      members: prev.members.includes(member)
-        ? prev.members.filter(m => m !== member)
-        : [...prev.members, member]
-    }));
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.name || formData.members.length === 0) {
-      alert('Please fill in all fields');
+
+    if (!formData.name.trim()) {
+      setError('Please enter a group name');
       return;
     }
 
-    const newGroup = {
-      id: Date.now(),
-      name: formData.name,
-      members: [currentUser.email, ...formData.members],
-      createdAt: new Date().toISOString(),
-      createdBy: currentUser.email
-    };
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/groups`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          userEmail: currentUser.email,
+        }),
+      });
 
-    const updatedGroups = [...groups, newGroup];
-    setGroups(updatedGroups);
-    localStorage.setItem('groups', JSON.stringify(updatedGroups));
-
-    setFormData({ name: '', members: [] });
-    setShowForm(false);
+      const data = await response.json();
+      if (data.status === 'SUCCESS') {
+        setFormData({ name: '' });
+        setShowForm(false);
+        await fetchUserGroups();
+      } else {
+        setError(data.message || 'Failed to create group');
+      }
+    } catch (err) {
+      console.error('Error creating group:', err);
+      setError('Failed to create group');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id) => {
-    const updatedGroups = groups.filter(g => g.id !== id);
-    setGroups(updatedGroups);
-    localStorage.setItem('groups', JSON.stringify(updatedGroups));
+  const handleDelete = async (groupId) => {
+    if (window.confirm('Are you sure you want to delete this group?')) {
+      try {
+        setGroups(groups.filter(g => g.id !== groupId));
+        // Note: Add actual delete API call when backend endpoint is ready
+      } catch (err) {
+        console.error('Error deleting group:', err);
+      }
+    }
+  };
+
+  const handleAddMember = (groupId) => {
+    setSelectedGroupId(groupId);
+    setShowAddMemberModal(true);
+  };
+
+  const handleCopyInviteLink = async (groupId) => {
+    try {
+      const response = await fetch(`${API_URL}/groups/${groupId}/invite`);
+      const data = await response.json();
+      if (data.status === 'SUCCESS') {
+        navigator.clipboard.writeText(data.data.inviteLink);
+        alert('Invite link copied to clipboard!');
+      }
+    } catch (err) {
+      console.error('Error copying invite link:', err);
+      alert('Failed to copy invite link');
+    }
   };
 
   return (
@@ -79,6 +130,9 @@ const Groups = ({ currentUser, onLogout }) => {
             {showForm ? '✕ Close' : '+ New Group'}
           </button>
         </div>
+
+        {error && <div className="alert alert-error">{error}</div>}
+        {loading && <div className="alert alert-info">Loading...</div>}
 
         {/* Create Group Form */}
         {showForm && (
@@ -94,30 +148,24 @@ const Groups = ({ currentUser, onLogout }) => {
                   onChange={handleChange}
                   placeholder="e.g., Trip to Goa"
                   required
+                  disabled={loading}
                 />
               </div>
 
-              <div className="form-group">
-                <label>Add Members</label>
-                <div className="checkbox-group">
-                  {availableMembers.map(member => (
-                    <label key={member} className="checkbox-item">
-                      <input
-                        type="checkbox"
-                        checked={formData.members.includes(member)}
-                        onChange={() => handleMemberChange(member)}
-                      />
-                      <span>{member}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
               <div className="form-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setShowForm(false)}
+                  disabled={loading}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={loading}
+                >
                   Create Group
                 </button>
               </div>
@@ -141,16 +189,23 @@ const Groups = ({ currentUser, onLogout }) => {
                   </button>
                 </div>
                 <div className="group-body">
-                  <p className="group-info"><strong>Members:</strong> {group.members.length}</p>
-                  <div className="members-list">
-                    {group.members.map(member => (
-                      <span key={member} className="member-badge">
-                        {member === currentUser.email ? 'You' : member}
-                      </span>
-                    ))}
+                  <p className="group-info"><strong>ID:</strong> {group.id}</p>
+                  <div className="group-actions">
+                    <button 
+                      className="btn btn-secondary btn-small"
+                      onClick={() => handleAddMember(group.id)}
+                    >
+                      + Add Member
+                    </button>
+                    <button 
+                      className="btn btn-secondary btn-small"
+                      onClick={() => handleCopyInviteLink(group.id)}
+                    >
+                      📋 Copy Link
+                    </button>
                   </div>
                 </div>
-                <button className="btn btn-primary btn-full">View Expenses</button>
+                <button className="btn btn-primary btn-full">View Details</button>
               </div>
             ))}
           </div>
@@ -161,6 +216,15 @@ const Groups = ({ currentUser, onLogout }) => {
               Create Your First Group
             </button>
           </div>
+        )}
+
+        {/* Add Member Modal */}
+        {showAddMemberModal && (
+          <AddMemberModal
+            groupId={selectedGroupId}
+            onClose={() => setShowAddMemberModal(false)}
+            onMemberAdded={fetchUserGroups}
+          />
         )}
       </div>
     </Layout>

@@ -15,6 +15,7 @@ import SettleUp from './pages/app/SettleUp';
 import Profile from './pages/app/Profile';
 
 // Other
+import JoinGroup from './pages/JoinGroup';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -49,10 +50,21 @@ function App() {
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register onLogin={handleLogin} />} />
 
+        {/* Public Route - Join Group (requires auth to join) */}
+        <Route path="/join/:token" element={isAuthenticated && currentUser ? <JoinGroup currentUser={currentUser} /> : <Navigate to="/login" />} />
+
         {/* Protected Routes */}
         {isAuthenticated ? (
           <>
             <Route path="/" element={<DashboardPage currentUser={currentUser} onLogout={handleLogout} />} />
+            <Route path="/app/dashboard" element={<DashboardPage currentUser={currentUser} onLogout={handleLogout} />} />
+            <Route path="/app/add-expense" element={<AddExpense currentUser={currentUser} onLogout={handleLogout} />} />
+            <Route path="/app/expenses" element={<ExpensesList currentUser={currentUser} onLogout={handleLogout} />} />
+            <Route path="/app/groups" element={<Groups currentUser={currentUser} onLogout={handleLogout} />} />
+            <Route path="/app/settle-up" element={<SettleUp currentUser={currentUser} onLogout={handleLogout} />} />
+            <Route path="/app/profile" element={<Profile currentUser={currentUser} onLogout={handleLogout} />} />
+
+            {/* Backward compatibility for old routes */}
             <Route path="/dashboard" element={<DashboardPage currentUser={currentUser} onLogout={handleLogout} />} />
             <Route path="/add-expense" element={<AddExpense currentUser={currentUser} onLogout={handleLogout} />} />
             <Route path="/expenses" element={<ExpensesList currentUser={currentUser} onLogout={handleLogout} />} />
@@ -63,6 +75,7 @@ function App() {
         ) : (
           <>
             <Route path="/" element={<Navigate to="/login" />} />
+            <Route path="/app/*" element={<Navigate to="/login" />} />
             <Route path="/dashboard" element={<Navigate to="/login" />} />
             <Route path="/add-expense" element={<Navigate to="/login" />} />
             <Route path="/expenses" element={<Navigate to="/login" />} />

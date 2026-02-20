@@ -3,6 +3,8 @@ const cors = require('cors');
 require('dotenv').config();
 
 const healthRoutes = require('./routes/healthRoutes');
+const groupRoutes = require('./routes/groupRoutes');
+const memberRoutes = require('./routes/memberRoutes');
 const db = require('./config/db');
 
 const app = express();
@@ -20,7 +22,9 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/api', healthRoutes);
+app.use('/api/health', healthRoutes);
+app.use('/api/groups', groupRoutes);
+app.use('/api/members', memberRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -29,7 +33,19 @@ app.get('/', (req, res) => {
     version: '1.0.0',
     endpoints: {
       health: '/api/health',
-      dbTest: '/api/db-test',
+      dbTest: '/api/health/db-test',
+      groups: {
+        create: 'POST /api/groups',
+        getUserGroups: 'GET /api/groups/user?userEmail=email',
+        getGroupDetails: 'GET /api/groups/:groupId',
+        getInviteLink: 'GET /api/groups/:groupId/invite'
+      },
+      members: {
+        addMember: 'POST /api/members/add/:groupId',
+        joinViaToken: 'POST /api/members/join/:token',
+        removeMember: 'DELETE /api/members/:groupId/:userId',
+        getMembers: 'GET /api/members/:groupId'
+      }
     },
   });
 });

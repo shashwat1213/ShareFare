@@ -50,6 +50,7 @@ const initializeDatabase = async () => {
         id SERIAL PRIMARY KEY,
         name VARCHAR(150) NOT NULL,
         created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        invite_token VARCHAR(255) UNIQUE NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
