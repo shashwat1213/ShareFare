@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { signup as signupAPI } from '../../services/api';
 import '../../styles/Auth.css';
 
 const Register = ({ onLogin }) => {
@@ -26,38 +27,62 @@ const Register = ({ onLogin }) => {
     setError('');
     setLoading(true);
 
+    // Validation
+    if (!formData.name || !formData.email || !formData.password) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      setLoading(false);
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
+    // Name validation
+    if (formData.name.trim().length < 2) {
+      setError('Name must be at least 2 characters');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Validation
-      if (!formData.name || !formData.email || !formData.password) {
-        setError('Please fill in all fields');
-        setLoading(false);
-        return;
-      }
-
-      if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match');
-        setLoading(false);
-        return;
-      }
-
-      if (formData.password.length < 6) {
-        setError('Password must be at least 6 characters');
-        setLoading(false);
-        return;
-      }
-
-      // Simulate API call
-      const user = {
-        id: Date.now(),
-        name: formData.name,
-        email: formData.email,
-        createdAt: new Date().toISOString()
-      };
+      const response = await signupAPI(formData.name, formData.email, formData.password);
       
-      onLogin(user);
-      navigate('/dashboard');
+      if (response.data.status === 'SUCCESS') {
+        const { user, token } = response.data.data;
+        
+        // Store JWT token
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        
+        onLogin(user);
+        navigate('/app/dashboard');
+      } else {
+        setError(response.data.message || 'Registration failed');
+      }
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      console.error('Registration error:', err);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Registration failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -82,6 +107,7 @@ const Register = ({ onLogin }) => {
               onChange={handleChange}
               placeholder="John Doe"
               required
+              disabled={loading}
             />
           </div>
 
@@ -95,6 +121,7 @@ const Register = ({ onLogin }) => {
               onChange={handleChange}
               placeholder="your@email.com"
               required
+              disabled={loading}
             />
           </div>
 
@@ -108,6 +135,7 @@ const Register = ({ onLogin }) => {
               onChange={handleChange}
               placeholder="Min 6 characters"
               required
+              disabled={loading}
             />
           </div>
 
@@ -121,6 +149,7 @@ const Register = ({ onLogin }) => {
               onChange={handleChange}
               placeholder="Confirm your password"
               required
+              disabled={loading}
             />
           </div>
 

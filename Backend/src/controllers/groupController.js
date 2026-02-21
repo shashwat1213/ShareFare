@@ -6,32 +6,31 @@ const generateInviteToken = () => uuidv4();
 
 // Create a new group
 exports.createGroup = async (req, res) => {
-  const { name, userEmail } = req.body;
+  const { name } = req.body;
+  const userEmail = req.user.email; // Get email from authenticated user
 
-  if (!name || !userEmail) {
+  if (!name) {
     return res.status(400).json({
       status: 'ERROR',
-      message: 'Group name and user email are required'
+      message: 'Group name is required'
     });
   }
 
   try {
-    // Get or create user
-    let userResult = await db.query(
+    // Get user by email (user is authenticated)
+    const userResult = await db.query(
       'SELECT id FROM users WHERE email = $1',
       [userEmail]
     );
 
-    let userId;
     if (userResult.rows.length === 0) {
-      const createUserResult = await db.query(
-        'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id',
-        [userEmail.split('@')[0], userEmail]
-      );
-      userId = createUserResult.rows[0].id;
-    } else {
-      userId = userResult.rows[0].id;
+      return res.status(404).json({
+        status: 'ERROR',
+        message: 'User not found'
+      });
     }
+
+    const userId = userResult.rows[0].id;
 
     // Create group with invite token
     const inviteToken = generateInviteToken();
@@ -135,14 +134,7 @@ exports.getGroupDetails = async (req, res) => {
 
 // Get all groups for user
 exports.getUserGroups = async (req, res) => {
-  const { userEmail } = req.query;
-
-  if (!userEmail) {
-    return res.status(400).json({
-      status: 'ERROR',
-      message: 'User email is required'
-    });
-  }
+  const userEmail = req.user.email; // Get email from authenticated user
 
   try {
     const result = await db.query(

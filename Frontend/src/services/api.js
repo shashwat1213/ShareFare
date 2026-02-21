@@ -10,9 +10,13 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor
+// Request interceptor - add JWT token
 apiClient.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     console.log(`[API] ${config.method.toUpperCase()} ${config.url}`);
     return config;
   },
@@ -29,10 +33,33 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Handle 401 - token expired or invalid
+    if (error.response?.status === 401) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('currentUser');
+      window.location.href = '/login';
+    }
     console.error('[API] Response error:', error);
     return Promise.reject(error);
   }
 );
+
+// Auth endpoints
+export const signup = (name, email, password) => {
+  return apiClient.post('/auth/signup', { name, email, password });
+};
+
+export const login = (email, password) => {
+  return apiClient.post('/auth/login', { email, password });
+};
+
+export const verifyToken = () => {
+  return apiClient.post('/auth/verify');
+};
+
+export const logout = () => {
+  return apiClient.post('/auth/logout');
+};
 
 // Health endpoint
 export const getHealth = () => {

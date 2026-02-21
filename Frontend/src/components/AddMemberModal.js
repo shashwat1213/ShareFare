@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import '../styles/Modal.css'; // We'll create this
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+import apiClient from '../services/api';
+import '../styles/Modal.css';
 
 const AddMemberModal = ({ groupId, onClose, onMemberAdded }) => {
   const [email, setEmail] = useState('');
@@ -27,20 +26,11 @@ const AddMemberModal = ({ groupId, onClose, onMemberAdded }) => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/members/add/${groupId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-          requestedByEmail: localStorage.getItem('userEmail') || ''
-        }),
+      const response = await apiClient.post(`/members/add/${groupId}`, {
+        email: email.trim(),
       });
 
-      const data = await response.json();
-      
-      if (data.status === 'SUCCESS') {
+      if (response.data.status === 'SUCCESS') {
         setSuccess(true);
         setEmail('');
         setTimeout(() => {
@@ -48,11 +38,11 @@ const AddMemberModal = ({ groupId, onClose, onMemberAdded }) => {
           onClose();
         }, 1000);
       } else {
-        setError(data.message || 'Failed to add member');
+        setError(response.data.message || 'Failed to add member');
       }
     } catch (err) {
       console.error('Error adding member:', err);
-      setError('Failed to add member. Please try again.');
+      setError(err.response?.data?.message || 'Failed to add member. Please try again.');
     } finally {
       setLoading(false);
     }

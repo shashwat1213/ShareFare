@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../layouts/MainLayout';
 import AddMemberModal from '../../components/AddMemberModal';
+import apiClient from '../../services/api';
 import '../../styles/AppPages.css';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const Groups = ({ currentUser, onLogout }) => {
   const navigate = useNavigate();
@@ -21,20 +20,17 @@ const Groups = ({ currentUser, onLogout }) => {
   // Fetch user groups on mount
   useEffect(() => {
     fetchUserGroups();
-  }, [currentUser]);
+  }, []);
 
   const fetchUserGroups = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        `${API_URL}/groups/user?userEmail=${currentUser.email}`
-      );
-      const data = await response.json();
-      if (data.status === 'SUCCESS') {
-        setGroups(data.data.groups || []);
+      const response = await apiClient.get('/groups/user');
+      if (response.data.status === 'SUCCESS') {
+        setGroups(response.data.data.groups || []);
       } else {
-        setError(data.message || 'Failed to fetch groups');
+        setError(response.data.message || 'Failed to fetch groups');
       }
     } catch (err) {
       console.error('Error fetching groups:', err);
@@ -63,28 +59,20 @@ const Groups = ({ currentUser, onLogout }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/groups`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          userEmail: currentUser.email,
-        }),
+      const response = await apiClient.post('/groups', {
+        name: formData.name,
       });
 
-      const data = await response.json();
-      if (data.status === 'SUCCESS') {
+      if (response.data.status === 'SUCCESS') {
         setFormData({ name: '' });
         setShowForm(false);
         await fetchUserGroups();
       } else {
-        setError(data.message || 'Failed to create group');
+        setError(response.data.message || 'Failed to create group');
       }
     } catch (err) {
       console.error('Error creating group:', err);
-      setError('Failed to create group');
+      setError(err.response?.data?.message || 'Failed to create group');
     } finally {
       setLoading(false);
     }
@@ -108,10 +96,9 @@ const Groups = ({ currentUser, onLogout }) => {
 
   const handleCopyInviteLink = async (groupId) => {
     try {
-      const response = await fetch(`${API_URL}/groups/${groupId}/invite`);
-      const data = await response.json();
-      if (data.status === 'SUCCESS') {
-        navigator.clipboard.writeText(data.data.inviteLink);
+      const response = await apiClient.get(`/groups/${groupId}/invite`);
+      if (response.data.status === 'SUCCESS') {
+        navigator.clipboard.writeText(response.data.data.inviteLink);
         alert('Invite link copied to clipboard!');
       }
     } catch (err) {

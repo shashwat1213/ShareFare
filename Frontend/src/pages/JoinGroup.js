@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Layout from '../../layouts/MainLayout';
-import '../../styles/JoinGroup.css';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+import Layout from '../layouts/MainLayout';
+import apiClient from '../services/api';
+import '../styles/JoinGroup.css';
 
 const JoinGroup = ({ currentUser }) => {
   const { token } = useParams();
@@ -31,20 +30,10 @@ const JoinGroup = ({ currentUser }) => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/members/join/${token}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userEmail: currentUser.email,
-        }),
-      });
+      const response = await apiClient.post(`/members/join/${token}`);
 
-      const data = await response.json();
-
-      if (data.status === 'SUCCESS') {
-        setGroupName(data.data.groupName);
+      if (response.data.status === 'SUCCESS') {
+        setGroupName(response.data.data.groupName);
         setSuccess(true);
 
         // Redirect after 2 seconds
@@ -52,11 +41,11 @@ const JoinGroup = ({ currentUser }) => {
           navigate('/app/groups');
         }, 2000);
       } else {
-        setError(data.message || 'Failed to join group');
+        setError(response.data.message || 'Failed to join group');
       }
     } catch (err) {
       console.error('Error joining group:', err);
-      setError('An error occurred while joining the group');
+      setError(err.response?.data?.message || 'An error occurred while joining the group');
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { login as loginAPI } from '../../services/api';
 import '../../styles/Auth.css';
 
 const Login = ({ onLogin }) => {
@@ -24,23 +25,43 @@ const Login = ({ onLogin }) => {
     setError('');
     setLoading(true);
 
+    // Validate inputs
+    if (!formData.email || !formData.password) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Simulate API call
-      if (formData.email && formData.password) {
-        const user = {
-          id: Date.now(),
-          email: formData.email,
-          name: formData.email.split('@')[0],
-          createdAt: new Date().toISOString()
-        };
+      const response = await loginAPI(formData.email, formData.password);
+      
+      if (response.data.status === 'SUCCESS') {
+        const { user, token } = response.data.data;
+        
+        // Store JWT token
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('currentUser', JSON.stringify(user));
         
         onLogin(user);
-        navigate('/dashboard');
+        navigate('/app/dashboard');
       } else {
-        setError('Please fill in all fields');
+        setError(response.data.message || 'Login failed');
       }
     } catch (err) {
-      setError('Login failed. Please try again.');
+      console.error('Login error:', err);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Login failed. Please check your credentials and try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -65,6 +86,7 @@ const Login = ({ onLogin }) => {
               onChange={handleChange}
               placeholder="your@email.com"
               required
+              disabled={loading}
             />
           </div>
 
@@ -76,8 +98,9 @@ const Login = ({ onLogin }) => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Enter your password"
+              placeholder="Enter your password (min 6 characters)"
               required
+              disabled={loading}
             />
           </div>
 
@@ -91,12 +114,6 @@ const Login = ({ onLogin }) => {
         <p className="auth-footer">
           Don't have an account? <Link to="/register">Register here</Link>
         </p>
-
-        <div className="demo-info">
-          <p className="demo-label">🧪 Demo Credentials:</p>
-          <p>Email: demo@example.com</p>
-          <p>Password: anything</p>
-        </div>
       </div>
     </div>
   );

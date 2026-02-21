@@ -3,8 +3,10 @@ const cors = require('cors');
 require('dotenv').config();
 
 const healthRoutes = require('./routes/healthRoutes');
+const authRoutes = require('./routes/authRoutes');
 const groupRoutes = require('./routes/groupRoutes');
 const memberRoutes = require('./routes/memberRoutes');
+const authMiddleware = require('./middlewares/authMiddleware');
 const db = require('./config/db');
 
 const app = express();
@@ -23,8 +25,11 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/health', healthRoutes);
-app.use('/api/groups', groupRoutes);
-app.use('/api/members', memberRoutes);
+app.use('/api/auth', authRoutes);
+
+// Protected routes (require authentication)
+app.use('/api/groups', authMiddleware, groupRoutes);
+app.use('/api/members', authMiddleware, memberRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -34,17 +39,23 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/api/health',
       dbTest: '/api/health/db-test',
+      auth: {
+        signup: 'POST /api/auth/signup',
+        login: 'POST /api/auth/login',
+        verify: 'POST /api/auth/verify (requires auth)',
+        logout: 'POST /api/auth/logout (requires auth)'
+      },
       groups: {
-        create: 'POST /api/groups',
-        getUserGroups: 'GET /api/groups/user?userEmail=email',
-        getGroupDetails: 'GET /api/groups/:groupId',
-        getInviteLink: 'GET /api/groups/:groupId/invite'
+        create: 'POST /api/groups (requires auth)',
+        getUserGroups: 'GET /api/groups/user?userEmail=email (requires auth)',
+        getGroupDetails: 'GET /api/groups/:groupId (requires auth)',
+        getInviteLink: 'GET /api/groups/:groupId/invite (requires auth)'
       },
       members: {
-        addMember: 'POST /api/members/add/:groupId',
-        joinViaToken: 'POST /api/members/join/:token',
-        removeMember: 'DELETE /api/members/:groupId/:userId',
-        getMembers: 'GET /api/members/:groupId'
+        addMember: 'POST /api/members/add/:groupId (requires auth)',
+        joinViaToken: 'POST /api/members/join/:token (requires auth)',
+        removeMember: 'DELETE /api/members/:groupId/:userId (requires auth)',
+        getMembers: 'GET /api/members/:groupId (requires auth)'
       }
     },
   });

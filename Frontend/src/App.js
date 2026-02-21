@@ -41,6 +41,7 @@ function App() {
     setIsAuthenticated(false);
     setCurrentUser(null);
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('authToken');
   };
 
   return (

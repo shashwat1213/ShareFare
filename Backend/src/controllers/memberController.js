@@ -3,7 +3,8 @@ const db = require('../config/db');
 // Add member to group
 exports.addMember = async (req, res) => {
   const { groupId } = req.params;
-  const { email, requestedByEmail } = req.body;
+  const { email } = req.body;
+  const requesterEmail = req.user.email; // Get email from authenticated user
 
   if (!groupId || !email) {
     return res.status(400).json({
@@ -28,21 +29,19 @@ exports.addMember = async (req, res) => {
 
     const group = groupResult.rows[0];
 
-    // Verify requester is group member or creator
-    if (requestedByEmail) {
-      const requesterResult = await db.query(
-        `SELECT u.id FROM users u
-         LEFT JOIN group_members gm ON u.id = gm.user_id AND gm.group_id = $1
-         WHERE u.email = $2`,
-        [groupId, requestedByEmail]
-      );
+    // Verify requester is group member
+    const requesterResult = await db.query(
+      `SELECT u.id FROM users u
+       LEFT JOIN group_members gm ON u.id = gm.user_id AND gm.group_id = $1
+       WHERE u.email = $2`,
+      [groupId, requesterEmail]
+    );
 
-      if (requesterResult.rows.length === 0) {
-        return res.status(403).json({
-          status: 'ERROR',
-          message: 'You are not a member of this group'
-        });
-      }
+    if (requesterResult.rows.length === 0) {
+      return res.status(403).json({
+        status: 'ERROR',
+        message: 'You are not a member of this group'
+      });
     }
 
     // Check if user exists
@@ -101,12 +100,12 @@ exports.addMember = async (req, res) => {
 // Join group via invite token
 exports.joinGroupByToken = async (req, res) => {
   const { token } = req.params;
-  const { userEmail } = req.body;
+  const userEmail = req.user.email; // Get email from authenticated user
 
-  if (!token || !userEmail) {
+  if (!token) {
     return res.status(400).json({
       status: 'ERROR',
-      message: 'Token and user email are required'
+      message: 'Token is required'
     });
   }
 
@@ -126,22 +125,20 @@ exports.joinGroupByToken = async (req, res) => {
 
     const groupId = groupResult.rows[0].id;
 
-    // Get or create user
+    // Get user (should already exist since authenticated)
     let userResult = await db.query(
       'SELECT id FROM users WHERE email = $1',
       [userEmail]
     );
 
-    let userId;
     if (userResult.rows.length === 0) {
-      const createUserResult = await db.query(
-        'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id',
-        [userEmail.split('@')[0], userEmail]
-      );
-      userId = createUserResult.rows[0].id;
-    } else {
-      userId = userResult.rows[0].id;
+      return res.status(404).json({
+        status: 'ERROR',
+        message: 'User account not found'
+      });
     }
+
+    const userId = userResult.rows[0].id;
 
     // Check if already a member
     const memberCheck = await db.query(
@@ -190,7 +187,7 @@ exports.joinGroupByToken = async (req, res) => {
 // Remove member from group
 exports.removeMember = async (req, res) => {
   const { groupId, userId } = req.params;
-  const { requestedByEmail } = req.body;
+  const requesterEmail = req.user.email; // Get email from authenticated user
 
   if (!groupId || !userId) {
     return res.status(400).json({
@@ -213,18 +210,17 @@ exports.removeMember = async (req, res) => {
       });
     }
 
-    if (requestedByEmail) {
-      const requesterResult = await db.query(
-        'SELECT id FROM users WHERE email = $1',
-        [requestedByEmail]
-      );
+    // Get requester's user ID
+    const requesterResult = await db.query(
+      'SELECT id FROM users WHERE email = $1',
+      [requesterEmail]
+    );
 
-      if (requesterResult.rows.length === 0 || requesterResult.rows[0].id !== groupResult.rows[0].created_by) {
-        return res.status(403).json({
-          status: 'ERROR',
-          message: 'Only group creator can remove members'
-        });
-      }
+    if (requesterResult.rows.length === 0 || requesterResult.rows[0].id !== groupResult.rows[0].created_by) {
+      return res.status(403).json({
+        status: 'ERROR',
+        message: 'Only group creator can remove members'
+      });
     }
 
     // Remove member
