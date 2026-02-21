@@ -20,7 +20,7 @@ const JoinGroup = ({ currentUser }) => {
     }
 
     joinGroup();
-  }, [token, currentUser]);
+  }, [joinGroup]);
 
   const joinGroup = async () => {
     if (!token) {
