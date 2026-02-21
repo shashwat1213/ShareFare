@@ -11,6 +11,7 @@ import DashboardPage from './pages/app/Dashboard';
 import AddExpense from './pages/app/AddExpense';
 import ExpensesList from './pages/app/ExpensesList';
 import Groups from './pages/app/Groups';
+import GroupDetails from './pages/app/GroupDetails';
 import SettleUp from './pages/app/SettleUp';
 import Profile from './pages/app/Profile';
 
@@ -62,6 +63,7 @@ function App() {
             <Route path="/app/add-expense" element={<AddExpense currentUser={currentUser} onLogout={handleLogout} />} />
             <Route path="/app/expenses" element={<ExpensesList currentUser={currentUser} onLogout={handleLogout} />} />
             <Route path="/app/groups" element={<Groups currentUser={currentUser} onLogout={handleLogout} />} />
+            <Route path="/app/groups/:groupId" element={<GroupDetails currentUser={currentUser} onLogout={handleLogout} />} />
             <Route path="/app/settle-up" element={<SettleUp currentUser={currentUser} onLogout={handleLogout} />} />
             <Route path="/app/profile" element={<Profile currentUser={currentUser} onLogout={handleLogout} />} />
 

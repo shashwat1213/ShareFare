@@ -1,17 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const groupController = require('../controllers/groupController');
+const memberController = require('../controllers/memberController');
 
 /**
  * POST /api/groups
  * Create a new group
- * Body: { name, userEmail }
+ * Body: { name }
  */
 router.post('/', groupController.createGroup);
 
 /**
- * GET /api/groups/user?userEmail=email
- * Get all groups for a user
+ * GET /api/groups/user
+ * Get all groups for authenticated user
  */
 router.get('/user', groupController.getUserGroups);
 
@@ -26,5 +27,12 @@ router.get('/:groupId', groupController.getGroupDetails);
  * Get invite link for group
  */
 router.get('/:groupId/invite', groupController.getInviteLink);
+
+/**
+ * POST /api/groups/:groupId/members
+ * Add member to group by email
+ * Body: { email }
+ */
+router.post('/:groupId/members', memberController.addMember);
 
 module.exports = router;

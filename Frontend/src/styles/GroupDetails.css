@@ -1,0 +1,199 @@
+/* Group Details Page Styles */
+
+.group-info-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.group-info-card .section {
+  margin-bottom: 20px;
+}
+
+.group-info-card h3 {
+  font-size: 1.3rem;
+  color: #333;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 12px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row label {
+  font-weight: 600;
+  color: #555;
+  flex: 0 0 120px;
+}
+
+.info-row span {
+  color: #333;
+  font-size: 1rem;
+}
+
+.info-row .btn-small {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+/* Members Section */
+.members-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-header h3 {
+  font-size: 1.3rem;
+  color: #333;
+  margin: 0;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 12px;
+  flex: 1;
+}
+
+/* Members List */
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border-left: 4px solid #0066cc;
+  transition: all 0.2s ease;
+}
+
+.member-item:hover {
+  background: #f0f7ff;
+  border-left-color: #0052a3;
+}
+
+.member-info {
+  flex: 1;
+}
+
+.member-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+  font-size: 1rem;
+}
+
+.you-badge {
+  display: inline-block;
+  background: #0066cc;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.member-email {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.member-joined {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+/* Empty State */
+.empty-members {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.empty-members p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Loading State */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  font-size: 1.1rem;
+  color: #666;
+}
+
+/* Error State */
+.error-state {
+  text-align: center;
+  padding: 40px 20px;
+  background: #fee;
+  border-radius: 8px;
+  color: #c00;
+}
+
+.error-state p {
+  margin-bottom: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .group-info-card,
+  .members-section {
+    padding: 16px;
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .info-row label {
+    flex: 1;
+  }
+
+  .member-item {
+    padding: 12px;
+  }
+
+  .member-name {
+    font-size: 0.95rem;
+  }
+
+  .member-email {
+    font-size: 0.85rem;
+  }
+
+  .member-joined {
+    font-size: 0.75rem;
+  }
+}

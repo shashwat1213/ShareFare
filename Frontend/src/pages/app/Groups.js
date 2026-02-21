@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../layouts/MainLayout';
-import AddMemberModal from '../../components/AddMemberModal';
 import apiClient from '../../services/api';
 import '../../styles/AppPages.css';
 
@@ -9,8 +8,6 @@ const Groups = ({ currentUser, onLogout }) => {
   const navigate = useNavigate();
   const [groups, setGroups] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
-  const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
@@ -87,11 +84,6 @@ const Groups = ({ currentUser, onLogout }) => {
         console.error('Error deleting group:', err);
       }
     }
-  };
-
-  const handleAddMember = (groupId) => {
-    setSelectedGroupId(groupId);
-    setShowAddMemberModal(true);
   };
 
   const handleCopyInviteLink = async (groupId) => {
@@ -180,19 +172,18 @@ const Groups = ({ currentUser, onLogout }) => {
                   <div className="group-actions">
                     <button 
                       className="btn btn-secondary btn-small"
-                      onClick={() => handleAddMember(group.id)}
-                    >
-                      + Add Member
-                    </button>
-                    <button 
-                      className="btn btn-secondary btn-small"
                       onClick={() => handleCopyInviteLink(group.id)}
                     >
                       📋 Copy Link
                     </button>
                   </div>
                 </div>
-                <button className="btn btn-primary btn-full">View Details</button>
+                <button 
+                  className="btn btn-primary btn-full"
+                  onClick={() => navigate(`/app/groups/${group.id}`)}
+                >
+                  View Details
+                </button>
               </div>
             ))}
           </div>
@@ -203,15 +194,6 @@ const Groups = ({ currentUser, onLogout }) => {
               Create Your First Group
             </button>
           </div>
-        )}
-
-        {/* Add Member Modal */}
-        {showAddMemberModal && (
-          <AddMemberModal
-            groupId={selectedGroupId}
-            onClose={() => setShowAddMemberModal(false)}
-            onMemberAdded={fetchUserGroups}
-          />
         )}
       </div>
     </Layout>
